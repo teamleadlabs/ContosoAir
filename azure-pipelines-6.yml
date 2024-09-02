@@ -1,4 +1,4 @@
-pool: Default
+pool: Azure Pipelines
 trigger:
   - master
 steps:
