@@ -1,25 +1,28 @@
-pool: Default
+pool:Default
 
 trigger:
-  - master
+
+- master
 
 steps:
-  - task: CopyFiles@2
-    displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)/Templates'
-    inputs:
-      SourceFolder: 'deployment'
-      Contents: '*.json'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)/Templates'
 
-  - task: ArchiveFiles@2
-    displayName: 'Archive $(Build.SourcesDirectory)'
-    inputs:
-      rootFolderOrFile: '$(Build.SourcesDirectory)'
-      includeRootFolder: false
+- task: CopyFiles@2
+displayName: 'Copy Files to:$(build.artifactstagingdirectory)/Templates'
 
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish Artifact: drop'
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: 'drop'
-      publishLocation: 'Container'
+inputs:
+
+SourceFolder: deployment
+
+Contents: '*.json'
+
+TargetFolder: '$(build.artifactstagingdirectory)/Templates'
+- task: ArchiveFiles@2
+displayName: 'Archive $(Build.SourcesDirectory)'
+
+inputs:
+
+rootFolderOrFile: '$(Build.SourcesDirectory)'
+
+includeRootFolder: false
+- task: PublishBuildArtifacts@1
+displayName: 'Publish Artifact: drop'
