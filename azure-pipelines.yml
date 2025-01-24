@@ -1,47 +1,42 @@
-pool: Default  # Using the self-hosted Default agent pool
+pool: Default
+
 trigger:
-  - master
+- master
+
 steps:
-  # Check if npm is installed on the agent
-  - script: |
-      npm --version
-    displayName: 'Check npm Version'
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results'
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '$(System.DefaultWorkingDirectory)/test-report.xml'
 
-  # Ensure Node.js (and npm) is installed if npm is not found
-  - task: UseNode@1
-    inputs:
-      versionSpec: '16.x'  # You can specify the version you need here
-    displayName: 'Install Node.js'
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish Code Coverage'
+  condition: eq(variables['Build.SourceBranchName'], 'master')
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/*coverage.xml'
+    reportDirectory: '$(System.DefaultWorkingDirectory)/coverage'
 
-  # Copy Files to the Artifact Staging Directory
-  - task: CopyFiles@2
-    displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)/Templates'
-    inputs:
-      SourceFolder: 'deployment'
-      Contents: '*.json'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)/Templates'
+- task: ArchiveFiles@2
+  displayName: 'Archive sources'
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
 
-  # Install npm packages
-  - task: Npm@1
-    inputs:
-      command: 'install'
-    displayName: 'Install npm packages'
+- task: CopyFiles@2
+  displayName: 'Copy ARM templates'
+  inputs:
+    SourceFolder: 'deployment'
+    Contents: '*.json'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)/Templates'
 
-  # Archive the source files
-  - task: ArchiveFiles@2
-    displayName: 'Archive $(Build.SourcesDirectory)'
-    inputs:
-      rootFolderOrFile: '$(Build.SourcesDirectory)'
-      includeRootFolder: false
-
-  # Publish the build artifacts
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish Artifact: drop'
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: 'drop'
-      publishLocation: 'Container'
-
-# Enable detailed logging for debugging
-variables:
-  system.debug: true
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    artifactName: 'drop'
+    publishLocation: 'Container'
